@@ -1,45 +1,121 @@
-import onetimepad		
+from cryptography.fernet import Fernet
+import tkinter as tk
 from tkinter import *
+from tkinter import messagebox
+from tkinter import filedialog
 from PIL import ImageTk
 from PIL import Image	
 root = Tk()
 root.title("CRYPTOGRAPHY")
-root.geometry("620x200")
-img =Image.open('C:\\Users\\Acer\\Desktop\\progarming-py\\cw1\\enc.jpg')
-img=img.resize((620,200))
+root.geometry("400x250")
+root.resizable(False,False)
+img =Image.open('C:\\Users\\Acer\\Desktop\\progarming-py\\dist\\enc.jpg')
+img=img.resize((400,250))
 bg = ImageTk.PhotoImage(img)
 label = Label(root, image=bg)
 label.place(x =0,y =0)
-def encryptMessage():					
-	pt = e1.get()
-	ct = onetimepad.encrypt(pt, 'RSA')
-	e2.insert(0, ct)
 
-def decryptMessage():					
-	ct1 = e3.get()
-	pt1 = onetimepad.decrypt(ct1, 'RSA')
-	e4.insert(0, pt1)
-	
-label = Label(root, text="TRY TEXT ENCRYPTION AND DECRYPTION",foreground='maroon',bg='sky blue',font=("Arial", 12, "bold"))
-label.grid(row=0, column=2)
-label1 = Label(root, text ='Plane text',font=("Arial", 10, "bold"))			
-label1.grid(row = 11, column = 1)
-label2 = Label(root, text ='Encrypted code',font=("Arial", 10, "bold"))
-label2.grid(row = 17, column = 1)
-l3 = Label(root, text ="Encrypted code",font=("Arial", 10, "bold"))
-l3.grid(row = 11, column = 3)
-l4 = Label(root, text ="Decrypted text",font=("Arial", 10, "bold"))
-l4.grid(row = 17, column = 3)
-e1 = Entry(root,bg='light green',bd=5)
-e1.grid(row = 13, column = 1)
-e2 = Entry(root,bg='light green',bd=5)
-e2.grid(row = 18, column = 1)
-e3 = Entry(root,bg='light green',bd=5)
-e3.grid(row = 13, column = 3)
-e4 = Entry(root,bg='light green',bd=5)
-e4.grid(row = 18, column = 3)
-ent = Button(root, text = "Encrypt", bg ="red", fg ="white", command = encryptMessage,font=("Arial", 14, "bold"))
-ent.grid(row = 16, column = 1)
-b2 = Button(root, text = "Decrypt", bg ="orange", fg ="white", command = decryptMessage,font=("Arial", 14, "bold"))
-b2.grid(row = 16, column = 3)
+# set global variables
+global filepath
+global Key
+global keypath
+
+# generates the key for encrypting/decrypting
+def Generate():
+    keypath = filedialog.askopenfilename()
+    key = Fernet.generate_key()
+    try:
+        with open(keypath, "wb") as filekey:
+            filekey.write(key)
+    except FileNotFoundError:
+        messagebox.showerror("Error", "no file was selected, try again")
+        return
+    messagebox.showinfo( "", "Key generated successfully!")
+
+# function to encrypt files of your choosing
+def Encrypt():
+    messagebox.showinfo( "", "select a key")
+    # prompts the user to select a file with a key
+    keypath = filedialog.askopenfilename()
+    # open key file
+    try:
+        with open(keypath, "rb") as filekey:
+            key = filekey.read()
+    except FileNotFoundError:
+        messagebox.showerror("Error", "no file was selected, try again")
+        return
+
+    # if the file selected doesn't have a key in it, it stops the function and gives the user an error
+    try:
+        global fernet
+        fernet = Fernet(key)
+    except ValueError:
+        messagebox.showerror("Error", "This is not a key file, try again")
+        return
+
+    messagebox.showinfo( "", "select one or more files to encrypt")
+    # prompts the user to select a file to encrypt
+    filepath = filedialog.askopenfilenames()
+    for x in filepath:
+        # opens each file in filepath 
+        with open(x, "rb") as file:
+            original = file.read()
+        
+        # encrypts the selected file
+        global encrypted
+        encrypted = fernet.encrypt(original)
+        with open(x, "wb") as encrypted_file:
+            encrypted_file.write(encrypted)
+    if not filepath:
+        messagebox.showerror("Error", "no file was selected, try again")
+    else:
+        messagebox.showinfo( "", "files encrypted successfully!")
+    
+
+# function to decrypt files of your choosing
+def Decrypt():
+    messagebox.showinfo( "", "select a key")
+    keypath = filedialog.askopenfilename()
+    try:
+        with open(keypath, "rb") as filekey:
+            key = filekey.read()
+    except FileNotFoundError:
+        messagebox.showerror("Error", "no file was selected, try again")
+        return
+
+    # if the file selected doesn't have a key in it, it stops the function and gives the user an error
+    try:
+        global fernet
+        fernet = Fernet(key)
+    except ValueError:
+        messagebox.showerror("Error", "This is not a key file, try again")
+        return
+
+    messagebox.showinfo( "", "select one or more files to decrypt")
+    # User to select a file to decrypt
+    filepath = filedialog.askopenfilenames()
+    for x in filepath:
+        with open(x, "rb") as enc_file:
+            encrypted = enc_file.read()
+        # decrypting the file
+        decrypted = fernet.decrypt(encrypted)
+        with open(x, "wb") as dec_file:
+            dec_file.write(decrypted)
+    if not filepath:
+        messagebox.showerror("Error", "no file was selected, try again")
+    else:
+        messagebox.showinfo( "", "files decrypted successfully!")
+
+my_label = tk.Label(root, text="Hello, Tkinter!", font=("Arial", 12), fg="blue", background="light blue")
+label
+my_label.pack()
+B = Button(root, text="Generate Key", command=Generate)
+B.config(font=("Areal", 12, "bold"),background="red")
+B.place(x=50,y=50)
+ebutton = Button(root, text="encrypt", command=Encrypt)
+ebutton.config(font=("Areal", 12, "bold"),background="yellow")
+ebutton.place(x=50,y=150)
+ebutton = Button(root, text="decrypt", command=Decrypt)
+ebutton.config(font=("Areal", 12, "bold"),background="green")
+ebutton.place(x=200,y=150)
 root.mainloop()
